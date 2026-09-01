@@ -1,9 +1,10 @@
-// Load tasks from Local Storage when the page loads
-document.addEventListener("DOMContentLoaded", loadTasks);
+document.addEventListener("DOMContentLoaded", function() {
+    loadTasks();
+    updateTaskCount();
+});
 
 let taskInput = document.getElementById("taskInput");
 
-// Allow pressing "Enter" key to add a task
 taskInput.addEventListener("keypress", function (event) {
     if (event.key === "Enter") {
         addTask();
@@ -20,11 +21,19 @@ function addTask() {
 
     createTaskElement(taskText);
     saveTaskToLocalStorage(taskText);
+    updateTaskCount();
 
     taskInput.value = "";
 }
 
 function createTaskElement(taskText) {
+    let taskList = document.getElementById("taskList");
+
+    let emptyMsg = document.getElementById("emptyMessage");
+    if (emptyMsg) {
+        emptyMsg.remove();
+    }
+
     let li = document.createElement("li");
 
     let span = document.createElement("span");
@@ -37,15 +46,15 @@ function createTaskElement(taskText) {
     deleteButton.onclick = function () {
         li.remove();
         removeTaskFromLocalStorage(taskText);
+        updateTaskCount();
+        checkEmptyList();
     };
 
     li.appendChild(span);
     li.appendChild(deleteButton);
-
-    document.getElementById("taskList").appendChild(li);
+    taskList.appendChild(li);
 }
 
-// Local Storage Functions
 function getTasksFromLocalStorage() {
     let tasks = localStorage.getItem("tasks");
     return tasks ? JSON.parse(tasks) : [];
@@ -59,13 +68,32 @@ function saveTaskToLocalStorage(task) {
 
 function loadTasks() {
     let tasks = getTasksFromLocalStorage();
-    tasks.forEach(function (task) {
-        createTaskElement(task);
-    });
+    if (tasks.length === 0) {
+        checkEmptyList();
+    } else {
+        tasks.forEach(task => createTaskElement(task));
+    }
 }
 
 function removeTaskFromLocalStorage(taskToRemove) {
     let tasks = getTasksFromLocalStorage();
     tasks = tasks.filter(task => task !== taskToRemove);
     localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+function updateTaskCount() {
+    let tasks = getTasksFromLocalStorage();
+    let countEl = document.getElementById("taskCount");
+    countEl.textContent = `${tasks.length} task${tasks.length === 1 ? '' : 's'} remaining`;
+}
+
+function checkEmptyList() {
+    let taskList = document.getElementById("taskList");
+    if (taskList.children.length === 0) {
+        let li = document.createElement("li");
+        li.id = "emptyMessage";
+        li.className = "empty-message";
+        li.textContent = "No tasks yet.";
+        taskList.appendChild(li);
+    }
 }
